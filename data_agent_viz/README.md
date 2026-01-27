@@ -11,6 +11,7 @@ This folder contains the core intelligence of the application, defined using the
     - Writes and executes SQL queries.
     - Delegates visualization tasks to the `GraphAgent`.
 - **Tools**: Uses the `BigQueryToolset` for direct database interaction.
+- **Instructions**: Uses `root_agent_instructions` from `instructions.py`.
 
 ### 2. GraphAgent (`agent.py`)
 - **Role**: Visualization Specialist.
@@ -19,6 +20,11 @@ This folder contains the core intelligence of the application, defined using the
     - Follows strict readability rules (no overlapping text, proper margins).
     - Uses a self-verification loop to ensure professional output.
 - **Tools**: Uses `save_graph_artifact` to store visualizations.
+- **Instructions**: Uses `graph_agent_instructions` from `instructions.py`.
+
+## 📜 Instructions (`instructions.py`)
+
+This file centralizes the agent personas and operational protocols, making it easy to tune agent behavior without touching the core logic in `agent.py`.
 
 ## 🛠️ Tools (`tools.py`)
 

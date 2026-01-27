@@ -22,7 +22,10 @@ graph LR
 
 ## 📁 Project Structure
 
--   `data_agent_viz/`: Contains the AI agent definitions and custom tools.
+-   `data_agent_viz/`: Contains the AI agent definitions, custom tools, and instructions.
+    -   `agent.py`: Agent definitions and sub-agent delegation.
+    -   `tools.py`: Custom tools for BigQuery and artifacts.
+    -   `instructions.py`: Centralized agent personas and system instructions.
 -   `ui/`: The Streamlit application code.
 -   `requirements.txt`: Project dependencies.
 
