@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venvadk/
+venv/
+env/
+.env
+
+# ADK Files
+.adk/
+.adk_history
+.adk_cache
+
+# BigQuery Service Account Keys
+*.json
+rahul-research-test-94ba79af556c.json
+
+# Streamlit
+.streamlit/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
