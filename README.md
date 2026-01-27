@@ -39,11 +39,27 @@ pip install -r requirements.txt
 ```
 
 ### 3. Configuration
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory with your API credentials. 
+
+**If using Google AI (Gemini API):**
 ```env
 GOOGLE_API_KEY=your_gemini_api_key
 ```
-Place your BigQuery service account JSON in `data_agent_viz/` and update the path in `tools.py`.
+
+**If using Vertex AI:**
+```env
+GOOGLE_GENAI_USE_VERTEXAI=1
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+```
+
+**BigQuery Setup:**
+1.  Place your BigQuery service account JSON key in the `data_agent_viz/` folder.
+2.  Open `data_agent_viz/tools.py` and ensure the `json_path` and `GOOGLE_CLOUD_PROJECT` match your local file name and project ID:
+    ```python
+    os.environ["GOOGLE_CLOUD_PROJECT"] = "your-project-id"
+    json_path = os.path.join(base_dir, "your-service-account-file.json")
+    ```
 
 ### 4. Running the Project
 **Start the API Server:**
