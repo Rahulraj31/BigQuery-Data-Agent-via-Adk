@@ -13,7 +13,7 @@ from google.adk.tools.tool_context import ToolContext
 # Initialize BigQuery Toolset
 os.environ["GOOGLE_CLOUD_PROJECT"] = "rahul-research-test"
 base_dir = os.path.dirname(os.path.abspath(__file__))
-json_path = os.path.join(base_dir, "rahul-research-test-94ba79af556c.json")
+json_path = os.path.join(base_dir, "service-cred.json")
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_path
 
 def get_bq_toolset():

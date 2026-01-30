@@ -28,8 +28,21 @@ This file centralizes the agent personas and operational protocols, making it ea
 
 ## 🛠️ Tools (`tools.py`)
 
--   `get_bq_toolset()`: Configures and returns the BigQuery toolset with write permissions.
--   `save_graph_artifact(svg_code)`: An asynchronous tool that:
+### BigQuery Toolset
+
+The `get_bq_toolset()` function configures and returns the BigQuery toolset with write permissions, providing the following tools:
+
+-   **`list_dataset_ids`**: Fetches BigQuery dataset IDs present in a GCP project.
+-   **`get_dataset_info`**: Fetches metadata about a BigQuery dataset (description, labels, creation time, etc.).
+-   **`list_table_ids`**: Fetches table IDs present in a BigQuery dataset.
+-   **`get_table_info`**: Fetches metadata about a BigQuery table (schema, row count, size, etc.).
+-   **`execute_sql`**: Runs a SQL query in BigQuery and fetches the result.
+-   **`forecast`**: Runs a BigQuery AI time series forecast using the `AI.FORECAST` function.
+-   **`ask_data_insights`**: Answers questions about data in BigQuery tables using natural language.
+
+### Custom Tools
+
+-   **`save_graph_artifact(svg_code)`**: An asynchronous tool that:
     1.  Encodes the RAW SVG string.
     2.  Saves it as an ADK artifact named `graph.svg`.
     3.  Returns a `types.Part` object for immediate display.

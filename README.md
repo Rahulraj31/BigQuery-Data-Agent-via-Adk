@@ -28,6 +28,24 @@ graph LR
     API -- Artifacts --> Streamlit
 ```
 
+## ✨ Features
+
+### BigQuery Integration
+
+The application leverages the **BigQuery Toolset** from ADK, providing comprehensive data access and analysis capabilities:
+
+-   **🗂️ Dataset Discovery**: List and explore all datasets in your GCP project with `list_dataset_ids` and `get_dataset_info`.
+-   **📊 Table Exploration**: Browse tables within datasets using `list_table_ids` and inspect detailed metadata with `get_table_info`.
+-   **🔍 SQL Execution**: Run custom SQL queries directly against BigQuery with `execute_sql`.
+-   **📈 AI-Powered Forecasting**: Generate time series forecasts using BigQuery's `AI.FORECAST` function via the `forecast` tool.
+-   **💬 Natural Language Insights**: Ask questions about your data in plain English using `ask_data_insights`.
+
+### Visualization
+
+-   **🎨 SVG Generation**: The GraphAgent creates mathematically precise, professional SVG visualizations.
+-   **🔄 Self-Verification**: Built-in quality checks ensure readable, non-overlapping text and proper margins.
+-   **💾 Artifact Storage**: Visualizations are automatically saved and managed through the ADK artifact system.
+
 ## 📁 Project Structure
 
 -   `data_agent_viz/`: Contains the AI agent definitions, custom tools, and instructions.
