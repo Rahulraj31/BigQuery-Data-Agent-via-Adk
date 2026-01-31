@@ -10,12 +10,12 @@ graph_agent = Agent(
     description="Specialized in creating graph images and data visualizations using Gemini 2.5 Flash.",
     instruction= graph_agent_instructions
 )
-
+bq_toolset = get_bq_toolset()
 # BigQuery Root Agent
 root_agent = Agent(
     name="BigQueryAgent",
     model="gemini-2.5-flash",
-    tools=[bigquery_toolset],
+    tools=[bq_toolset],
     sub_agents=[graph_agent],
     instruction=root_agent_instructions
 )

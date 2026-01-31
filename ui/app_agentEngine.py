@@ -105,23 +105,65 @@ def display_image(data, mime_type, caption=None):
     except Exception as e:
         st.error(f"Error in display_image: {str(e)}")
 
+def find_inline_data(obj):
+    """Recursively search for inline_data/inlineData in a dictionary or object."""
+    if obj is None:
+        return None
+        
+    # If it's a Part object (handled by SDK), check its attributes
+    if not isinstance(obj, dict):
+        inline = getattr(obj, "inline_data", None) or getattr(obj, "inlineData", None)
+        if inline: return find_inline_data(inline)
+        
+        # Check for 'result' attribute
+        result = getattr(obj, "result", None)
+        if result: return find_inline_data(result)
+        
+        # Check for 'response' attribute
+        response = getattr(obj, "response", None)
+        if response: return find_inline_data(response)
+        return None
+    
+    # Check current level (if dict)
+    inline = obj.get("inline_data") or obj.get("inlineData")
+    if inline and isinstance(inline, dict) and ("data" in inline or "mime_type" in inline or "mimeType" in inline):
+        return inline
+        
+    # Check for 'result' wrapper
+    result = obj.get("result")
+    if result:
+        res = find_inline_data(result)
+        if res: return res
+        
+    # Check for 'response' wrapper
+    response = obj.get("response")
+    if response:
+        res = find_inline_data(response)
+        if res: return res
+        
+    # Check all values recursively
+    for v in obj.values():
+        res = find_inline_data(v)
+        if res: return res
+    return None
+
 def render_message_parts(parts):
     """Renders a list of message parts with deduplication and priority logic."""
     if not parts:
         return
         
-    # Check if any part is an explicit image/artifact
+    # Identification of components
     has_explicit_image = any(
-        ("inline_data" in p or "inlineData" in p) or 
-        ("function_response" in p or "functionResponse" in p) 
+        find_inline_data(p) is not None
         for p in parts
     )
     
     for part in parts:
-        # Normalize part keys
-        text = part.get("text")
-        inline_data = part.get("inline_data") or part.get("inlineData")
-        func_resp = part.get("function_response") or part.get("functionResponse")
+        # Normalize part keys (SDK might use attributes)
+        if isinstance(part, dict):
+            text = part.get("text")
+        else:
+            text = getattr(part, "text", None)
 
         # 1. Handle text
         if text:
@@ -135,29 +177,13 @@ def render_message_parts(parts):
             else:
                 st.markdown(text)
         
-        # 2. Handle inline_data
-        if inline_data:
-            mime_type = inline_data.get("mime_type") or inline_data.get("mimeType")
-            data = inline_data.get("data")
-            display_image(data, mime_type)
-            
-        # 3. Handle functionResponse (which might contain inlineData)
-        if func_resp:
-            response_obj = func_resp.get("response")
-            if response_obj:
-                # result might be in a Part object or a dict
-                result = None
-                if isinstance(response_obj, dict):
-                    result = response_obj.get("result")
-                else:
-                    result = getattr(response_obj, "result", None)
-                
-                if result and isinstance(result, dict):
-                    inner_inline = result.get("inlineData") or result.get("inline_data")
-                    if inner_inline:
-                        mime_item = inner_inline.get("mimeType") or inner_inline.get("mime_type")
-                        data_item = inner_inline.get("data")
-                        display_image(data_item, mime_item)
+        # 2. Handle inline_data (at any level)
+        inline = find_inline_data(part)
+        if inline:
+            # SDK uses mime_type, dict might use mimeType
+            mime_item = inline.get("mimeType") or inline.get("mime_type") if isinstance(inline, dict) else getattr(inline, "mime_type", None)
+            data_item = inline.get("data") if isinstance(inline, dict) else getattr(inline, "data", None)
+            display_image(data_item, mime_item)
 
 st.set_page_config(page_title="BigQuery Data Agent", page_icon="📊", layout="wide")
 
@@ -183,7 +209,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("BigQuery Data Agent", text_alignment="center")
+st.markdown("<h1 style='text-align: center;'>BigQuery Data Agent</h1>", unsafe_allow_html=True)
 st.markdown("<h5 style='text-align: center;'>Query your data and generate visualizations instantly.</h5>", unsafe_allow_html=True)
 
 # Chat history and session state
@@ -228,26 +254,40 @@ if prompt := st.chat_input("Ask me about your data or to generate a graph..."):
                 
                 # iterate through the response events
                 for event in response:
-                    # event structure: {'content': {'role': 'model', 'parts': [...]}, 'actions': {...}}
+                    # 1. Handle content parts
                     content = getattr(event, "content", None) or (event.get("content") if isinstance(event, dict) else None)
                     if content:
-                        parts = content.get("parts") if isinstance(content, dict) else getattr(content, "parts", [])
+                        parts = getattr(content, "parts", []) if not isinstance(content, dict) else content.get("parts", [])
                         for p in parts:
                             if hasattr(p, "to_dict"):
                                 all_parts.append(p.to_dict())
                             elif isinstance(p, dict):
                                 all_parts.append(p)
                             else:
-                                all_parts.append({"text": str(p)})
+                                # Fallback for text parts or custom objects
+                                text_val = getattr(p, "text", None) or (p.get("text") if isinstance(p, dict) else str(p))
+                                all_parts.append({"text": text_val})
                     
-                    # Handle actions (including function responses)
+                    # 2. Handle actions (including function responses)
                     actions = getattr(event, "actions", None) or (event.get("actions") if isinstance(event, dict) else None)
                     if actions:
-                        func_resps = actions.get("function_responses") or actions.get("functionResponse") if isinstance(actions, dict) else getattr(actions, "function_responses", [])
+                        # Function responses
+                        func_resps = getattr(actions, "function_responses", []) if not isinstance(actions, dict) else (actions.get("function_responses") or actions.get("functionResponses"))
                         if func_resps:
                             for resp in func_resps:
+                                # Add the whole response for robust rendering
                                 resp_data = resp.to_dict() if hasattr(resp, "to_dict") else resp
                                 all_parts.append({"function_response": resp_data})
+                                
+                                # Also check for nested parts if provided
+                                resp_obj = getattr(resp, "response", None) if not isinstance(resp, dict) else resp.get("response")
+                                if resp_obj:
+                                    inner_parts = getattr(resp_obj, "parts", []) if not isinstance(resp_obj, dict) else resp_obj.get("parts", [])
+                                    for ip in inner_parts:
+                                        if hasattr(ip, "to_dict"):
+                                            all_parts.append(ip.to_dict())
+                                        else:
+                                            all_parts.append(ip)
                 
                 if all_parts:
                     render_message_parts(all_parts)

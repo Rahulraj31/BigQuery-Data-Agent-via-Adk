@@ -12,20 +12,22 @@ A powerful, AI-driven assistant that allows users to query Google BigQuery data 
 
 ## 🏗️ Architecture
 
-The project follows a modern, decoupled architecture:
+The project follows a modern, decoupled architecture with two deployment options:
 
-1.  **Streamlit UI**: A premium frontend that manages user sessions and communicates with the backend via HTTP.
-2.  **ADK API Server**: The core engine that hosts the AI agents, manages artifacts (like graphs), and handles session persistence.
-3.  **Gemini 2.5 Flash**: The underlying LLM that powers both the data analysis and the SVG generation.
+1.  **Streamlit UI**: A premium frontend that manages user sessions and communicates with the backend.
+2.  **Backend Options**:
+    *   **ADK API Server**: A local server that hosts the agents and manages artifacts.
+    *   **Vertex AI Agent Engine**: A fully managed service on GCP for hosting and scaling ADK agents.
+3.  **Gemini 2.5 Flash / Pro**: The underlying LLM that powers both data analysis and SVG generation.
 
 ```mermaid
 graph LR
     User((User)) --> Streamlit[Streamlit UI]
-    Streamlit -- HTTP /run --> API[ADK API Server]
-    API -- Tools --> BQ[(BigQuery)]
-    API -- LLM --> Gemini[Gemini 2.5 Flash]
-    Gemini -- SVG --> API
-    API -- Artifacts --> Streamlit
+    Streamlit -- SDK / API --> Backend[Backend: Local API or Agent Engine]
+    Backend -- Tools --> BQ[(BigQuery)]
+    Backend -- LLM --> Gemini[Gemini 2.5/1.5]
+    Gemini -- SVG --> Backend
+    Backend -- Artifacts/Data --> Streamlit
 ```
 
 ## ✨ Features
@@ -40,19 +42,19 @@ The application leverages the **BigQuery Toolset** from ADK, providing comprehen
 -   **📈 AI-Powered Forecasting**: Generate time series forecasts using BigQuery's `AI.FORECAST` function via the `forecast` tool.
 -   **💬 Natural Language Insights**: Ask questions about your data in plain English using `ask_data_insights`.
 
-### Visualization
+### Visualization & UI
 
 -   **🎨 SVG Generation**: The GraphAgent creates mathematically precise, professional SVG visualizations.
--   **🔄 Self-Verification**: Built-in quality checks ensure readable, non-overlapping text and proper margins.
--   **💾 Artifact Storage**: Visualizations are automatically saved and managed through the ADK artifact system.
+-   **🛡️ Robust Rendering**: Permissive rendering logic that recursively searches for image data in complex agent responses, ensuring graphs are always visible.
+-   **💎 Premium Design**: A custom-styled Streamlit interface featuring dark mode, glassmorphism effects, and smooth animations.
+-   **🔄 Artifact System**: Visualizations are managed as artifacts, allowing for easy retrieval and display.
 
 ## 📁 Project Structure
 
 -   `data_agent_viz/`: Contains the AI agent definitions, custom tools, and instructions.
-    -   `agent.py`: Agent definitions and sub-agent delegation.
-    -   `tools.py`: Custom tools for BigQuery and artifacts.
-    -   `instructions.py`: Centralized agent personas and system instructions.
--   `ui/`: The Streamlit application code.
+-   `ui/`: The Streamlit application files.
+    -   `app_local.py`: Connects to a local ADK API server.
+    -   `app_agentEngine.py`: Connects directly to a deployed Vertex AI Agent Engine.
 -   `requirements.txt`: Project dependencies.
 
 ## 🚀 Getting Started
@@ -68,42 +70,35 @@ pip install -r requirements.txt
 ```
 
 ### 3. Configuration
-Create a `.env` file in the root directory with your API credentials. 
+Create a `.env` file in the root directory:
 
-**If using Google AI (Gemini API):**
 ```env
-GOOGLE_API_KEY=your_gemini_api_key
-```
+# For Local API
+API_URL=http://127.0.0.1:8000
 
-**If using Vertex AI:**
-```env
-GOOGLE_GENAI_USE_VERTEXAI=1
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
+# For Vertex AI Agent Engine
+PROJECT_ID=your-project-id
+LOCATION=us-central1
 ```
 
 **BigQuery Setup:**
 1.  Place your BigQuery service account JSON key in the `data_agent_viz/` folder.
-2.  Open `data_agent_viz/tools.py` and ensure the `json_path` and `GOOGLE_CLOUD_PROJECT` match your local file name and project ID:
-    ```python
-    os.environ["GOOGLE_CLOUD_PROJECT"] = "your-project-id"
-    json_path = os.path.join(base_dir, "your-service-account-file.json")
-    ```
+2.  Follow the instructions in `data_agent_viz/tools.py` to set the project ID and credential path.
 
 ### 4. Running the Project
-**Start the API Server:**
-```bash
-adk api_server --reload --reload_agents
-```
 
-**Start the UI:**
-```bash
-streamlit run ui/app.py
-```
+**Option A: Local Development**
+1. Start the API Server: `adk api_server --reload --reload_agents`
+2. Start the Local UI: `streamlit run ui/app_local.py`
+
+**Option B: Production (Agent Engine)**
+1. Ensure your agent is deployed to Vertex AI.
+2. Update the `RESOURCE_NAME` in `ui/app_agentEngine.py`.
+3. Start the Engine UI: `streamlit run ui/app_agentEngine.py`
 
 ## 🔐 Session Management
 
-Sessions are managed end-to-end to ensure a seamless chat experience:
--   **UI Layer**: Automatically generates a unique `user_id` and `session_id` using `st.session_state`.
--   **API Layer**: Uses these IDs to maintain chat history and store session-specific artifacts (like generated graphs).
--   **Agent Layer**: Agents receive the session context, allowing them to reference previous parts of the conversation.
+Sessions are managed to ensure a seamless chat experience:
+-   **Local**: UI generates `user_id` and `session_id`, which are used by the ADK API for persistence.
+-   **Agent Engine**: The Vertex AI SDK handles session context via the `session_id` parameter in the `query` method.
+-   **Persistence**: Both methods ensure that agents maintain context and can reference previous conversation parts.

@@ -104,17 +104,21 @@ def render_message_parts(parts):
     if not parts:
         return
         
-    # Check if any part is an explicit image/artifact
+    # Identification of components
     has_explicit_image = any(
         ("inline_data" in p or "inlineData" in p) or 
-        ("functionResponse" in p or "function_response" in p) 
-        for p in parts
+        ("functionResponse" in p or "function_response" in p) or
+        ("result" in p and ("inline_data" in p["result"] or "inlineData" in p["result"]))
+        for p in parts if isinstance(p, dict)
     )
     
     for part in parts:
+        if not isinstance(part, dict):
+            continue
+            
         # 1. Handle text
-        if "text" in part and part["text"]:
-            text = part["text"]
+        text = part.get("text")
+        if text:
             # If we have an explicit image, skip SVG-like content in text to avoid duplication
             if has_explicit_image and ("<svg" in text.lower() or is_likely_base64(text)):
                 continue
@@ -136,16 +140,22 @@ def render_message_parts(parts):
         func_resp = part.get("functionResponse") or part.get("function_response")
         if func_resp:
             response_obj = func_resp.get("response")
-            if response_obj:
-                result = response_obj.get("result")
-                if result and isinstance(result, dict):
-                    inner_inline = result.get("inlineData") or result.get("inline_data")
-                    if inner_inline:
-                        mime_type = inner_inline.get("mimeType") or inner_inline.get("mime_type")
-                        data = inner_inline.get("data")
-                        display_image(data, mime_type)
+            if isinstance(response_obj, dict):
+                # Check for inline_data directly in response (ADK style)
+                inner_inline = response_obj.get("inline_data") or response_obj.get("inlineData")
+                
+                # Check for result with inlineData (ADK/Gemini style)
+                if not inner_inline:
+                    result = response_obj.get("result")
+                    if isinstance(result, dict):
+                        inner_inline = result.get("inlineData") or result.get("inline_data")
+                
+                if inner_inline:
+                    mime = inner_inline.get("mimeType") or inner_inline.get("mime_type")
+                    data = inner_inline.get("data")
+                    display_image(data, mime)
 
-st.set_page_config(page_title="BigQuery Data Agent", page_icon="📊", layout="wide")
+st.set_page_config(page_title="BigQuery & Graph Agent", page_icon="📊", layout="wide")
 
 # Custom CSS for a premium look
 st.markdown("""
@@ -169,8 +179,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("BigQuery Data Agent", text_alignment="center")
-st.markdown("Query your data and generate visualizations instantly.", text_alignment="center")
+st.title("📊 BigQuery & Graph AI Assistant")
+st.markdown("Query your data and generate visualizations instantly.")
 
 # Chat history and session state
 if "messages" not in st.session_state:
@@ -237,8 +247,12 @@ if prompt := st.chat_input("Ask me about your data or to generate a graph..."):
                         func_resps = actions.get("function_responses") or actions.get("functionResponses")
                         if func_resps:
                             for resp in func_resps:
+                                # Append the function response as a part for render_message_parts to handle
+                                all_parts.append({"function_response": resp})
+                                
+                                # Compatibility: also check if 'response' has 'parts'
                                 response_content = resp.get("response")
-                                if response_content and "parts" in response_content:
+                                if isinstance(response_content, dict) and "parts" in response_content:
                                     all_parts.extend(response_content["parts"])
 
                         # 3. Artifacts from artifact_delta
