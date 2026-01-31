@@ -145,7 +145,7 @@ def render_message_parts(parts):
                         data = inner_inline.get("data")
                         display_image(data, mime_type)
 
-st.set_page_config(page_title="BigQuery & Graph Agent", page_icon="📊", layout="wide")
+st.set_page_config(page_title="BigQuery Data Agent", page_icon="📊", layout="wide")
 
 # Custom CSS for a premium look
 st.markdown("""
@@ -169,8 +169,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("📊 BigQuery & Graph AI Assistant")
-st.markdown("Query your data and generate visualizations instantly.")
+st.title("BigQuery Data Agent", text_alignment="center")
+st.markdown("Query your data and generate visualizations instantly.", text_alignment="center")
 
 # Chat history and session state
 if "messages" not in st.session_state:

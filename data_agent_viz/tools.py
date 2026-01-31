@@ -6,21 +6,6 @@ from google.adk.tools.bigquery.config import BigQueryToolConfig
 from google.adk.tools.bigquery.config import WriteMode
 from google.genai import types
 from google.adk.tools.tool_context import ToolContext
-  
-
-
-
-# Initialize BigQuery Toolset
-os.environ["GOOGLE_CLOUD_PROJECT"] = "rahul-research-test"
-base_dir = os.path.dirname(os.path.abspath(__file__))
-json_path = os.path.join(base_dir, "service-cred.json")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_path
-
-def get_bq_toolset():
-    tool_config = BigQueryToolConfig(write_mode=WriteMode.ALLOWED)
-    return BigQueryToolset(bigquery_tool_config=tool_config) 
-
-# Initialize BigQuery Toolset
 
 
 async def save_graph_artifact(svg_code: str, tool_context: ToolContext) -> Any:
@@ -55,3 +40,17 @@ async def save_graph_artifact(svg_code: str, tool_context: ToolContext) -> Any:
         )
 
     return part
+
+
+
+# Initialize BigQuery Toolset 
+#comment this line while deploying
+base_dir = os.path.dirname(os.path.abspath(__file__))
+json_path = os.path.join(base_dir, "service-cred.json")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_path
+
+
+tool_config = BigQueryToolConfig(write_mode=WriteMode.ALLOWED)
+# Initialize BigQuery Toolset
+bigquery_toolset = BigQueryToolset(bigquery_tool_config=tool_config) 
+

@@ -1,5 +1,5 @@
 from google.adk.agents.llm_agent import Agent
-from .tools import get_bq_toolset, save_graph_artifact
+from .tools import *
 from .instructions import graph_agent_instructions, root_agent_instructions
 
 # Graph Sub-Agent
@@ -12,11 +12,10 @@ graph_agent = Agent(
 )
 
 # BigQuery Root Agent
-bq_toolset = get_bq_toolset()
 root_agent = Agent(
     name="BigQueryAgent",
     model="gemini-2.5-flash",
-    tools=[bq_toolset],
+    tools=[bigquery_toolset],
     sub_agents=[graph_agent],
     instruction=root_agent_instructions
 )
